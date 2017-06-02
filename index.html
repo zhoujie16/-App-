@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title>演示浏览器</title>
+		<link rel="stylesheet" type="text/css" href="css/aui.2.0.css" />
+		<script src="js/aui-dialog.js" type="text/javascript" charset="utf-8"></script>
+		<script src="js/vue.js" type="text/javascript" charset="utf-8"></script>
+		<style type="text/css">
+			.aui-btn {
+				margin: 5px 0px;
+			}
+			
+			.aui-content.history {
+				height: 300px;
+				overflow: auto;
+				background-color: lightgray;
+				font-size: 0.7rem;
+			}
+			
+			.aui-content.history .aui-list-item-title {
+				font-size: 0.7rem;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div class="aui-content" id="app">
+			<header class="aui-bar aui-bar-nav">DEMO</header>
+			<div class="aui-content aui-content-padded">
+				<ul class="aui-list aui-form-list">
+					<li class="aui-list-item">
+						<div class="aui-list-item-input">
+							<textarea v-model="url" placeholder="链接"></textarea>
+						</div>
+					</li>
+				</ul>
+				<div @click="openView" class="aui-btn aui-btn-primary aui-btn-block aui-btn-sm">Open</div>
+				<div @click="openViewNew" class="aui-btn aui-btn-primary aui-btn-block aui-btn-sm">WebKitOpen</div>
+			</div>
+			<div class="aui-content aui-content-padded">
+				<ul class="aui-list aui-list-in">
+					<li class="aui-list-header">
+						History
+					</li>
+					<div class="aui-content history">
+						<li @click="historyCellClick(item)" v-for="(item,i) in history" class="aui-list-item">
+							<div class="aui-list-item-label-icon">
+								{{i+1}}.
+							</div>
+							<div class="aui-list-item-inner">
+								<div class="aui-list-item-title aui-ellipsis-1">{{item.url}}</div>
+								<div class="aui-list-item-right">
+									<div @click.stop="deleteHistory(item)" class="aui-label aui-label-info">X</div>
+								</div>
+							</div>
+						</li>
+					</div>
+
+				</ul>
+			</div>
+		</div>
+		<script type="text/javascript">
+			var dialog = new auiDialog();
+			var app = new Vue({
+				el: '#app',
+				data: {
+					url: 'http://',
+					history: [],
+				},
+				methods: {
+					openView: function() {
+						this.saveUrl(this.url);
+						this.getHistory();
+						var web = plus.webview.create(this.url, 'web');
+						web.show('slide-in-right');
+					},
+					openViewNew: function() {
+						this.saveUrl(this.url);
+						this.getHistory();
+						var web = plus.webview.create(this.url, 'web', {
+							kernel: 'WKWebview',
+						});
+						web.show('slide-in-right');
+					},
+					historyCellClick: function(item) {
+						this.url = item.url;
+					},
+					deleteHistory: function(item) {
+						var _this = this;
+						dialog.alert({
+							title: 'Warning',
+							msg: 'is delete the history?',
+							buttons: ['cancel', 'ok']
+						}, function(res) {
+							if(res.buttonIndex === 2) {
+								localStorage.removeItem(item.id);
+								_this.getHistory();
+							}
+						});
+					},
+					saveUrl: function(url) {
+						var isHave = false;
+						for(var i = 0; i < localStorage.length; i++) {
+							if(url == localStorage.getItem(localStorage.key(i))) {
+								localStorage.removeItem(localStorage.key(i));
+								break;
+							}
+						}
+						var key = new Date().getTime();
+						localStorage.setItem(key, url);
+
+					},
+					getHistory: function() {
+						var arr = [];
+						for(var i = 0; i < localStorage.length; i++) {
+							arr.unshift({
+								id: localStorage.key(i),
+								url: localStorage.getItem(localStorage.key(i)),
+							});
+						}
+						this.history = arr;
+					},
+				},
+				mounted: function() {
+					this.getHistory();
+				},
+			})
+		</script>
+	</body>
+
+</html>
